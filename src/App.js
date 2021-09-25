@@ -42,8 +42,10 @@ const Recipe = (props) => {
         <h4>Calories Per Serving: </h4>
         <p>{props.recipeObj.recipeCalories} calories</p>
       </div>
-      <h3 className="recipe ingredients">Ingredients</h3>
-      <h3 className="recipe instructions">Instructions</h3>
+      <div className="recipe details">
+        <h3 className="recipe ingredients">Ingredients</h3>
+        <h3 className="recipe instructions">Instructions</h3>
+      </div>
     </div>
   );
 };
