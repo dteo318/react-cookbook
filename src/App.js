@@ -47,8 +47,23 @@ const NavBar = () => {
   );
 };
 
+const handleOnSearchBarKeyPress = (e, searchText) => {
+  if (e.key === "Enter") {
+    console.log(searchText);
+  }
+};
+
 const SearchBar = () => {
-  return <input className="searchBar" placeholder="what's cooking..." />;
+  const [searchText, onSearchBarTextChange] = useState("");
+
+  return (
+    <input
+      className="searchBar"
+      placeholder="what's cooking..."
+      onKeyPress={(e) => handleOnSearchBarKeyPress(e, searchText)}
+      onChange={(e) => onSearchBarTextChange(e.target.value)}
+    />
+  );
 };
 
 const Recipe = (props) => {
