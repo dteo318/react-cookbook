@@ -1,38 +1,5 @@
 import { useState } from "react";
-
-// Temporary placeholder recipe
-const placeholderRecipe = {
-  recipeName: "Minced Beef",
-  recipePreparationTime: 40,
-  recipeCostPerServing: 7.99,
-  recipeCalories: 700,
-  recipeImgUrl:
-    "https://www.safefood.net/getmedia/7cd50be3-8aca-40d0-b3d0-9520561f5a23/mince_1.jpg?w=2048&h=1152&ext=.jpg&width=1360&resizemode=force",
-  recipeInstructions: [
-    "Step 1",
-    "Step 2",
-    "Step 3",
-    "Step 4",
-    "Step 5",
-    "Step 6",
-    "Step 7",
-    "Step 8",
-    "Step 9",
-    "Step 10",
-  ],
-  recipeIngredients: [
-    "Ingredient 1",
-    "Ingredient 2",
-    "Ingredient 3",
-    "Ingredient 4",
-    "Ingredient 5",
-    "Ingredient 6",
-    "Ingredient 7",
-    "Ingredient 8",
-    "Ingredient 9",
-    "Ingredient 10",
-  ],
-};
+import Keys from "./config.js";
 
 const NavBar = () => {
   return (
@@ -47,20 +14,61 @@ const NavBar = () => {
   );
 };
 
-const handleOnSearchBarKeyPress = (e, searchText) => {
-  if (e.key === "Enter") {
-    console.log(searchText);
-  }
+const getRecipes = (query) => {
+  const searchRecipeUrl =
+    `https://api.spoonacular.com/recipes/complexSearch?apiKey=${Keys.api_key}` +
+    `&query=${query}&instructionsRequired=true&addRecipeInformation=true&addRecipeNutrition=true&fillIngredients=true`;
+
+  return fetch(searchRecipeUrl)
+    .then((response) => {
+      return response.json();
+    })
+    .then((data) => {
+      let recipes = [];
+      const results = data.results;
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        try {
+          const recipe = {
+            recipeId: result.id,
+            recipeName: result.title,
+            recipePreparationTime: result.readyInMinutes,
+            recipeCostPerServing: result.pricePerServing,
+            recipeCalories: result.nutrition.nutrients[0].amount,
+            recipeImgUrl: result.image,
+            recipeInstructions: result.analyzedInstructions[0].steps,
+            recipeIngredients: result.extendedIngredients,
+          };
+
+          recipes.push(recipe);
+        } catch (e) {
+          console.log("Unable to parse recipe for: ", result);
+        }
+      }
+      return recipes;
+    });
 };
 
-const SearchBar = () => {
+function handleOnSearchBarKeyPress(e, searchText, onSearchedRecipes) {
+  if (e.key === "Enter") {
+    console.log("Searching for " + searchText + "...");
+    getRecipes(searchText).then((searchedRecipes) => {
+      console.log("Found: ", searchedRecipes);
+      onSearchedRecipes(searchedRecipes);
+    });
+  }
+}
+
+const SearchBar = (props) => {
   const [searchText, onSearchBarTextChange] = useState("");
 
   return (
     <input
       className="searchBar"
       placeholder="what's cooking..."
-      onKeyPress={(e) => handleOnSearchBarKeyPress(e, searchText)}
+      onKeyPress={(e) =>
+        handleOnSearchBarKeyPress(e, searchText, props.onSearchedRecipes)
+      }
       onChange={(e) => onSearchBarTextChange(e.target.value)}
     />
   );
@@ -82,29 +90,29 @@ const Recipe = (props) => {
   return (
     <div className="recipe">
       <img
-        className="recipe image"
+        className="recipeImage"
         src={props.recipeObj.recipeImgUrl}
         alt="Recipe"
       />
-      <h2 className="recipe name">{props.recipeObj.recipeName}</h2>
+      <h2 className="recipeName">{props.recipeObj.recipeName}</h2>
       <RecipeOverview
         recipePreparationTime={props.recipeObj.recipePreparationTime}
         recipeCostPerServing={props.recipeObj.recipeCostPerServing}
         recipeCalories={props.recipeObj.recipeCalories}
       />
-      <h3
+      <p
         onClick={() => setViewingDetails(!viewingDetails)}
-        className="recipe details button"
+        className="recipeDetailsButton"
       >
         Details
-      </h3>
+      </p>
     </div>
   );
 };
 
 const RecipeOverview = (props) => {
   return (
-    <div className="recipe overview">
+    <div className="recipeOverview">
       <h4>Preparation Time: </h4>
       <p>{props.recipePreparationTime} minutes</p>
       <h4>Cost Per Serving: </h4>
@@ -117,23 +125,23 @@ const RecipeOverview = (props) => {
 
 const RecipeDetails = (props) => {
   return (
-    <div className="recipe details">
-      <p className="recipe returnOverview" onClick={props.onReturnToOverview}>
+    <div className="recipeDetails">
+      <p className="recipeReturnOverview" onClick={props.onReturnToOverview}>
         Go back to overview
       </p>
-      <div className="recipe ingredients">
+      <div className="recipeIngredients">
         <h2>Ingredients</h2>
         <ul>
           {props.ingredients.map((ingredient, idx) => (
-            <li>{ingredient}</li>
+            <li>{ingredient.original}</li>
           ))}
         </ul>
       </div>
-      <div className="recipe instructions">
+      <div className="recipeInstructions">
         <h2>Instructions</h2>
         <ol>
           {props.instructions.map((instructions, idx) => (
-            <li>{instructions}</li>
+            <li>{instructions.step}</li>
           ))}
         </ol>
       </div>
@@ -142,14 +150,18 @@ const RecipeDetails = (props) => {
 };
 
 function App() {
+  const [recipes, onSearchedRecipes] = useState([]);
+
   return (
     <div>
       <NavBar />
       <div className="searchContainer">
-        <SearchBar />
+        <SearchBar onSearchedRecipes={onSearchedRecipes} />
       </div>
       <div className="recipeContainer">
-        <Recipe recipeObj={placeholderRecipe} />
+        {recipes.map((recipe, idx) => (
+          <Recipe recipeObj={recipe} key={recipe.recipeId} />
+        ))}
       </div>
     </div>
   );
