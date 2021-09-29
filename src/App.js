@@ -3,9 +3,9 @@ import Keys from "./config.js";
 
 const NavBar = (props) => {
   return (
-    <nav className="navBar">
-      <h1>My Cookbook</h1>
-      <ul>
+    <nav className="flex items-center px-4 py-5 bg-gray-700 text-white">
+      <h1 className="mr-12 text-xl font-semibold">My Cookbook</h1>
+      <ul className="list-none flex justify-between w-1/3 font-light">
         <li onClick={() => props.changePage("searchRecipes")}>Find Recipes</li>
         <li onClick={() => props.changePage("savedRecipes")}>Saved Recipes</li>
         <li>Costs & Calories</li>
@@ -86,7 +86,7 @@ const SearchBar = (props) => {
 
   return (
     <input
-      className="searchBar"
+      className="w-full h-12 my-8 px-4 focus:outline-none rounded"
       placeholder="what's cooking..."
       onKeyPress={(e) =>
         handleOnSearchBarKeyPress(
@@ -134,49 +134,52 @@ const Recipe = (props) => {
   }
 
   return (
-    <div className="recipe">
+    <div className="box-border w-full grid grid-cols-3 justify-items-center items-center bg-gray-200 mb-6 py-8 px-4 rounded-md">
       <img
-        className="recipeImage"
+        className="col-start-1 col-end-3 w-3/4"
         src={props.recipeObj.recipeImgUrl}
         alt="Recipe"
       />
-      <h2 className="recipeName">{props.recipeObj.recipeName}</h2>
-      <RecipeOverview
-        recipePreparationTime={props.recipeObj.recipePreparationTime}
-        recipeCostPerServing={props.recipeObj.recipeCostPerServing}
-        recipeCalories={props.recipeObj.recipeCalories}
-      />
-      <p
-        onClick={() => setViewingDetails(!viewingDetails)}
-        className="recipeDetailsButton"
-      >
-        Details
-      </p>
-      <i
-        className={
-          (props.recipeObj.recipeSaved ? "fas" : "far") +
-          " fa-heart fa-2x recipeHeartIcon"
-        }
-        onClick={() =>
-          handleRecipeSaved(
-            props.recipeObj,
-            props.savedRecipes,
-            props.saveRecipe
-          )
-        }
-      ></i>
+      <div className="h-full flex flex-col justify-evenly items-center font-light">
+        <h2 className="font-extrabold text-xl">{props.recipeObj.recipeName}</h2>
+        <RecipeOverview
+          recipePreparationTime={props.recipeObj.recipePreparationTime}
+          recipeCostPerServing={props.recipeObj.recipeCostPerServing}
+          recipeCalories={props.recipeObj.recipeCalories}
+        />
+        <p
+          onClick={() => setViewingDetails(!viewingDetails)}
+          className="font-medium"
+        >
+          Details
+        </p>
+        <i
+          className={
+            (props.recipeObj.recipeSaved ? "fas" : "far") +
+            " fa-heart fa-2x recipeHeartIcon" +
+            ""
+          }
+          onClick={() =>
+            handleRecipeSaved(
+              props.recipeObj,
+              props.savedRecipes,
+              props.saveRecipe
+            )
+          }
+        ></i>
+      </div>
     </div>
   );
 };
 
 const RecipeOverview = (props) => {
   return (
-    <div className="recipeOverview">
-      <h4>Preparation Time: </h4>
+    <div className="h-3/5 flex flex-col justify-evenly items-center">
+      <h4 className="font-medium">Preparation Time: </h4>
       <p>{props.recipePreparationTime} minutes</p>
-      <h4>Cost Per Serving: </h4>
+      <h4 className="font-medium">Cost Per Serving: </h4>
       <p>${props.recipeCostPerServing}</p>
-      <h4>Calories Per Serving: </h4>
+      <h4 className="font-medium">Calories Per Serving: </h4>
       <p>{props.recipeCalories} calories</p>
     </div>
   );
@@ -184,26 +187,32 @@ const RecipeOverview = (props) => {
 
 const RecipeDetails = (props) => {
   return (
-    <div className="recipeDetails">
-      <p className="recipeReturnOverview" onClick={props.onReturnToOverview}>
+    <div className="box-border flex flex-col items-center font-light bg-gray-200 mb-6 py-8 px-12 rounded-md">
+      <div className="grid grid-cols-2 gap-x-8">
+        <div className="col-start-1">
+          <h2 className="font-bold text-lg mb-4">Ingredients</h2>
+          <ul className="list-disc">
+            {props.ingredients.map((ingredient, idx) => (
+              <li key={idx} className="mb-2">
+                {ingredient.original}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="col-start-2">
+          <h2 className="font-bold text-lg mb-4">Instructions</h2>
+          <ol className="list-decimal">
+            {props.instructions.map((instructions, idx) => (
+              <li key={idx} className="mb-2">
+                {instructions.step}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+      <p className="font-medium" onClick={props.onReturnToOverview}>
         Go back to overview
       </p>
-      <div className="recipeIngredients">
-        <h2>Ingredients</h2>
-        <ul>
-          {props.ingredients.map((ingredient, idx) => (
-            <li key={idx}>{ingredient.original}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="recipeInstructions">
-        <h2>Instructions</h2>
-        <ol>
-          {props.instructions.map((instructions, idx) => (
-            <li key={idx}>{instructions.step}</li>
-          ))}
-        </ol>
-      </div>
     </div>
   );
 };
@@ -218,27 +227,28 @@ function App() {
       return (
         <div>
           <NavBar changePage={onPageSelected} />
-          <div className="searchContainer">
+
+          <div className="flex flex-col items-center mx-56">
             <SearchBar
               onSearchedRecipes={onSearchedRecipes}
               savedRecipes={savedRecipes}
             />
+            {recipes.map((recipe, idx) => (
+              <Recipe
+                recipeObj={recipe}
+                key={recipe.recipeId}
+                saveRecipe={onRecipeSaved}
+                savedRecipes={savedRecipes}
+              />
+            ))}
           </div>
-          {recipes.map((recipe, idx) => (
-            <Recipe
-              recipeObj={recipe}
-              key={recipe.recipeId}
-              saveRecipe={onRecipeSaved}
-              savedRecipes={savedRecipes}
-            />
-          ))}
         </div>
       );
     case "savedRecipes":
       return (
         <div>
           <NavBar changePage={onPageSelected} />
-          <div className="recipeContainer">
+          <div className="flex flex-col items-center mx-56 mt-12">
             {savedRecipes.map((savedRecipe, idx) => (
               <Recipe
                 recipeObj={savedRecipe}
